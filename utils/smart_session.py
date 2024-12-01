@@ -1,6 +1,6 @@
 import asyncio
 import time
-from typing import Any
+from typing import Any, Optional
 
 import structlog.typing
 from aiogram import Bot
@@ -14,11 +14,7 @@ from aiogram.methods.base import TelegramMethod, TelegramType
 
 
 class StructLogAiogramAiohttpSessions(AiohttpSession):
-    def __init__(
-        self,
-        logger: structlog.typing.FilteringBoundLogger,
-        **kwargs: Any,
-    ) -> None:
+    def __init__(self, logger: structlog.typing.FilteringBoundLogger, **kwargs: Any):
         super().__init__(**kwargs)
         self._logger = logger
 
@@ -26,7 +22,7 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
         self,
         bot: Bot,
         method: TelegramMethod[TelegramType],
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
     ) -> TelegramType:
         req_logger = self._logger.bind(
             bot=bot.token,
@@ -40,12 +36,12 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
         try:
             res = await super().make_request(bot, method, timeout)
         except Exception as e:
-            req_logger.exception(
+            req_logger.error(
                 "API error",
                 error=e,
                 time_spent_ms=(time.monotonic() - st) * 1000,
             )
-            raise
+            raise e
         req_logger.debug(
             "API response",
             response=(
@@ -63,7 +59,7 @@ class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
         self,
         bot: Bot,
         method: TelegramMethod[TelegramType],
-        timeout: int | None = None,
+        timeout: Optional[int] = None,
     ) -> TelegramType:
         attempt = 0
         while True:
@@ -78,7 +74,7 @@ class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
                 else:
                     sleepy_time = 2**attempt
                 await asyncio.sleep(sleepy_time)
-            except Exception:
-                raise
+            except Exception as e:
+                raise e
             else:
                 return res

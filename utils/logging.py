@@ -1,45 +1,93 @@
 import logging
 import sys
-
 import structlog
+from core.config import conf
+import orjson
 
-import config
-import models
+# def orjson_dumps(
+#         v: typing.Any,
+#         *,
+#         default: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None,
+# ) -> str:
+#     # orjson.dumps returns bytes, to match standard json.dumps we need to decode
+#     return orjson.dumps(v, default=default).decode()
+
+
+def orjson_dumps(v, *, default=None) -> str:
+    """Custom JSON serialization using orjson."""
+    return orjson.dumps(v, default=default).decode()
+
+
+# class CustomBaseModel(BaseModel):
+#     """
+#     An optimized Pydantic BaseModel for JSON handling.
+#     """
+#
+#     model_config = ConfigDict(
+#         json_loads=orjson.loads,  # Use orjson for JSON deserialization
+#         json_dumps=orjson_dumps,  # Use orjson for JSON serialization
+#         json_encoders={uuid.UUID: str}  # Convert UUIDs to strings
+#     )
 
 
 def setup_logger() -> structlog.typing.FilteringBoundLogger:
+    """
+    Initializes and configures the logger with enhanced visual formatting
+    for development and structured JSON formatting for production.
+    """
+    # Set up basic Python logging
     logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
+        level=conf.bot.logging_level,  # Log level from configuration
+        stream=sys.stdout,  # Log output stream
+        format="%(message)s",  # Simplified log format
     )
-    log: structlog.typing.FilteringBoundLogger = structlog.get_logger(
-        structlog.stdlib.BoundLogger,
-    )
+
+    # Shared processors for all environments
     shared_processors: list[structlog.typing.Processor] = [
-        structlog.processors.add_log_level,
+        structlog.processors.add_log_level,  # Include log level in the log
+        structlog.processors.TimeStamper(fmt="iso", utc=True),  # Add timestamp in ISO format
     ]
-    processors: list[structlog.typing.Processor] = [*shared_processors]
+
+    # Define colored output for development
+    def add_color(logger, method_name, event_dict):
+        """
+        Adds color to log levels for better visual distinction.
+        """
+        level = event_dict.get("level", "").upper()
+        colors = {
+            "DEBUG": "\033[94m",  # Blue
+            "INFO": "\033[92m",   # Green
+            "WARNING": "\033[93m",  # Yellow
+            "ERROR": "\033[91m",  # Red
+            "CRITICAL": "\033[41m",  # Red background
+        }
+        reset_color = "\033[0m"
+        if level in colors:
+            event_dict["level"] = f"{colors[level]}{level}{reset_color}"
+        return event_dict
+
     if sys.stderr.isatty():
-        # Pretty printing when we run in a terminal session.
-        # Automatically prints pretty tracebacks when "rich" is installed
-        processors.extend(
-            [
-                structlog.processors.TimeStamper(fmt="iso", utc=True),
-                structlog.dev.ConsoleRenderer(),
-            ],
-        )
+        # Development-friendly processors with color and pretty output
+        environment_processors = [
+            add_color,  # Add color to log levels
+            structlog.dev.ConsoleRenderer(pad_event=20),  # Nicely formatted console logs
+        ]
     else:
-        # Print JSON when we run, e.g., in a Docker container.
-        # Also print structured tracebacks.
-        processors.extend(
-            [
-                structlog.processors.TimeStamper(fmt=None, utc=True),
-                structlog.processors.dict_tracebacks,
-                structlog.processors.JSONRenderer(serializer=models.base.orjson_dumps),
-            ],
-        )
+        # Production-friendly processors with JSON formatting
+        environment_processors = [
+            structlog.processors.dict_tracebacks,  # Structured tracebacks
+            structlog.processors.JSONRenderer(serializer=orjson_dumps),  # JSON logs
+        ]
+
+    # Combine shared and environment-specific processors
+    processors = shared_processors + environment_processors
+
+    # Configure structlog with the selected processors
     structlog.configure(
         processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(int(config.LOGGING_LEVEL)),
+        wrapper_class=structlog.make_filtering_bound_logger(conf.bot.logging_level),
+        logger_factory=structlog.PrintLoggerFactory(),
     )
-    return log
+
+    # Return a logger instance
+    return structlog.get_logger()
