@@ -1,33 +1,19 @@
 import logging
 import sys
+import typing
+
 import structlog
 from core.config import conf
 import orjson
 
-# def orjson_dumps(
-#         v: typing.Any,
-#         *,
-#         default: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None,
-# ) -> str:
-#     # orjson.dumps returns bytes, to match standard json.dumps we need to decode
-#     return orjson.dumps(v, default=default).decode()
 
-
-def orjson_dumps(v, *, default=None) -> str:
+def orjson_dumps(
+        v,
+        *,
+        default: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None
+) -> str:
     """Custom JSON serialization using orjson."""
     return orjson.dumps(v, default=default).decode()
-
-
-# class CustomBaseModel(BaseModel):
-#     """
-#     An optimized Pydantic BaseModel for JSON handling.
-#     """
-#
-#     model_config = ConfigDict(
-#         json_loads=orjson.loads,  # Use orjson for JSON deserialization
-#         json_dumps=orjson_dumps,  # Use orjson for JSON serialization
-#         json_encoders={uuid.UUID: str}  # Convert UUIDs to strings
-#     )
 
 
 def setup_logger() -> structlog.typing.FilteringBoundLogger:
@@ -56,7 +42,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
         level = event_dict.get("level", "").upper()
         colors = {
             "DEBUG": "\033[94m",  # Blue
-            "INFO": "\033[92m",   # Green
+            "INFO": "\033[92m",  # Green
             "WARNING": "\033[93m",  # Yellow
             "ERROR": "\033[91m",  # Red
             "CRITICAL": "\033[41m",  # Red background
