@@ -20,7 +20,7 @@ from redis.asyncio import Redis
 import utils
 from core import *
 from handlers import prepare_router
-from utils.tg_updates import tg_updates_app
+from utils.updates import tg_updates_app
 
 
 async def create_db_connections(dp: Dispatcher) -> None:

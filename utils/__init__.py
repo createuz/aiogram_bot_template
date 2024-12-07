@@ -1,3 +1,3 @@
-from . import connect_to_services as connect_to_services
-from . import smart_session as smart_session
-from . import tg_updates as tg_updates
+from . import services as connect_to_services
+from . import sessions as smart_session
+from . import updates as tg_updates

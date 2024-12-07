@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship
 
-from .statistic_models import Statistics
+from .statistics import Statistics
 from db.database import Base, db, cache
 
 

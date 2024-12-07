@@ -1,3 +1,4 @@
-from .user_models import *
-from .statistic_models import *
-from .admin_models import *
+from .users import *
+from .statistics import *
+from .admins import *
+from .database import *
