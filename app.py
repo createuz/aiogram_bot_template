@@ -10,9 +10,13 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.client.telegram import TelegramAPIServer
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.fsm.strategy import FSMStrategy
 from aiohttp import web
+from redis.asyncio import Redis
+
 import utils
 from core import *
 from handlers import prepare_router
@@ -39,21 +43,22 @@ async def create_db_connections(dp: Dispatcher) -> None:
         logger.debug("Succesfully connected to PostgreSQL", db="main")
     dp["db_pool"] = db_pool
 
-    # if conf.cache.enabled:
-    #     logger.debug("Connecting to Redis")
-    #     try:
-    #         redis_pool = await utils.connect_to_services.wait_redis_pool(
-    #             logger=dp["cache_logger"],
-    #             host=conf.cache.host,
-    #             port=conf.cache.port,
-    #             database=0,
-    #         )
-    #     except tenacity.RetryError:
-    #         logger.error("Failed to connect to Redis")
-    #         exit(1)
-    #     else:
-    #         logger.debug("Succesfully connected to Redis")
-    #     dp["cache_pool"] = redis_pool
+    if conf.cache.enabled:
+        logger.debug("Connecting to Redis")
+        try:
+            redis_pool = await utils.connect_to_services.wait_redis_pool(
+                logger=dp["cache_logger"],
+                host=conf.cache.host,
+                port=conf.cache.port,
+                password=conf.cache.password,
+                database=0
+            )
+        except tenacity.RetryError:
+            logger.error("Failed to connect to Redis")
+            exit(1)
+        else:
+            logger.debug("Succesfully connected to Redis")
+        dp["cache_pool"] = redis_pool
 
     dp["temp_bot_cloud_session"] = utils.smart_session.SmartAiogramAiohttpSession(
         json_loads=orjson.loads,
@@ -138,16 +143,12 @@ async def aiohttp_on_shutdown(app: web.Application) -> None:
 
 async def aiogram_on_startup_webhook(dispatcher: Dispatcher, bot: Bot) -> None:
     await setup_aiogram(dispatcher)
-    webhook_logger = dispatcher["aiogram_logger"].bind(
-        webhook_url=conf.webhook.address
-    )
+    webhook_logger = dispatcher["aiogram_logger"].bind(webhook_url=conf.webhook.address)
     webhook_logger.debug("Configuring webhook")
     await bot.set_webhook(
-        url=conf.webhook.address.format(
-            token=conf.bot.token, bot_id=conf.bot.token.split(":")[0]
-        ),
+        url=conf.webhook.address.format(token=conf.bot.token, bot_id=conf.bot.token.split(":")[0]),
         allowed_updates=dispatcher.resolve_used_update_types(),
-        secret_token=conf.webhook.secret_token,
+        secret_token=conf.webhook.secret_token
     )
     webhook_logger.info("Configured webhook")
 
@@ -177,9 +178,7 @@ async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot) -> None:
 async def setup_aiohttp_app(bot: Bot, dp: Dispatcher) -> web.Application:
     scheduler = aiojobs.Scheduler()
     app = web.Application()
-    subapps: list[tuple[str, web.Application]] = [
-        ("/tg/webhooks/", tg_updates_app),
-    ]
+    subapps: list[tuple[str, web.Application]] = [("/tg/webhooks/", tg_updates_app)]
     for prefix, subapp in subapps:
         subapp["bot"] = bot
         subapp["dp"] = dp
@@ -195,7 +194,6 @@ async def setup_aiohttp_app(bot: Bot, dp: Dispatcher) -> web.Application:
 
 def main() -> None:
     aiogram_session_logger = setup_logger().bind(type="aiogram_session")
-
     if conf.custom_api_server.enabled:
         session = utils.smart_session.SmartAiogramAiohttpSession(
             api=TelegramAPIServer(
@@ -203,43 +201,46 @@ def main() -> None:
                 file=conf.custom_api_server.file_url,
                 is_local=conf.custom_api_server.is_local,
             ),
-            json_loads=orjson.loads,
-            logger=aiogram_session_logger,
+            json_loads=orjson.loads, logger=aiogram_session_logger
         )
     else:
         session = utils.smart_session.SmartAiogramAiohttpSession(
             json_loads=orjson.loads,
             logger=aiogram_session_logger,
         )
-    bot = Bot(token=conf.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(token=conf.bot.token, session=session, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
-    # storage: RedisStorage = RedisStorage(
-    #     redis=Redis.from_url(url=conf.redis.build_redis_url()),
-    #     state_ttl=conf.redis.state_ttl,
-    #     data_ttl=conf.redis.data_ttl,
-    #     key_builder=DefaultKeyBuilder(with_bot_id=True)
-    # )
-    fsm_strategy: FSMStrategy | None = FSMStrategy.CHAT
+    # fsm_strategy: FSMStrategy | None = FSMStrategy.CHAT
     dp = Dispatcher(
-        storage=MemoryStorage(),
-        fsm_strategy=fsm_strategy
+        storage=RedisStorage(
+            redis=Redis(
+                host=conf.redis.host,
+                password=conf.redis.password,
+                port=conf.redis.port,
+                db=conf.redis.db
+            ),
+            state_ttl=conf.redis.state_ttl,
+            data_ttl=conf.redis.data_ttl,
+            key_builder=DefaultKeyBuilder(with_bot_id=True)
+        )
     )
+
     dp["aiogram_session_logger"] = aiogram_session_logger
 
-    # if conf.webhook.enabled:
-    #     dp.startup.register(aiogram_on_startup_webhook)
-    #     dp.shutdown.register(aiogram_on_shutdown_webhook)
-    #     web.run_app(
-    #         asyncio.run(setup_aiohttp_app(bot, dp)),
-    #         handle_signals=True,
-    #         host=conf.webhook.listening_host,
-    #         port=conf.webhook.listening_port,
-    #     )
-    # else:
-    dp.startup.register(aiogram_on_startup_polling)
-    dp.shutdown.register(aiogram_on_shutdown_polling)
-    dp.include_router(prepare_router())
-    asyncio.run(dp.start_polling(bot))
+    if conf.webhook.enabled:
+        dp.startup.register(aiogram_on_startup_webhook)
+        dp.shutdown.register(aiogram_on_shutdown_webhook)
+        web.run_app(
+            asyncio.run(setup_aiohttp_app(bot, dp)),
+            handle_signals=True,
+            host=conf.webhook.listening_host,
+            port=conf.webhook.listening_port,
+        )
+    else:
+        dp.startup.register(aiogram_on_startup_polling)
+        dp.shutdown.register(aiogram_on_shutdown_polling)
+        dp.include_router(prepare_router())
+        asyncio.run(dp.start_polling(bot))
 
 
 if __name__ == "__main__":

@@ -73,7 +73,7 @@ class CacheConfig:
     enabled: bool = bool(os.getenv("USE_CACHE", False))
     host: str = os.getenv("CACHE_HOST", "localhost")
     port: int = int(os.getenv("CACHE_PORT", 6379))
-    password: str = os.getenv("CACHE_PASSWORD", '1')
+    password: str = os.getenv("CACHE_PASSWORD", None)
 
     def build_cache_url(self) -> str:
         """Builds the cache server URL."""
@@ -86,7 +86,7 @@ class CacheConfig:
 @dataclass
 class WebhookConfig:
     """Webhook configuration."""
-    enabled: bool = bool(os.getenv("USE_WEBHOOK", False))
+    enabled: bool = bool(os.getenv("USE_WEBHOOK", True))
     address: str = os.getenv("MAIN_WEBHOOK_ADDRESS", "")
     secret_token: str = os.getenv("MAIN_WEBHOOK_SECRET_TOKEN", "")
     listening_host: str = os.getenv("MAIN_WEBHOOK_LISTENING_HOST", "0.0.0.0")
