@@ -8,7 +8,7 @@ from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.exceptions import (
     RestartingTelegram,
     TelegramRetryAfter,
-    TelegramServerError,
+    TelegramServerError
 )
 from aiogram.methods.base import TelegramMethod, TelegramType
 
@@ -19,10 +19,10 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
         self._logger = logger
 
     async def make_request(
-        self,
-        bot: Bot,
-        method: TelegramMethod[TelegramType],
-        timeout: Optional[int] = None,
+            self,
+            bot: Bot,
+            method: TelegramMethod[TelegramType],
+            timeout: Optional[int] = None,
     ) -> TelegramType:
         req_logger = self._logger.bind(
             bot=bot.token,
@@ -56,10 +56,10 @@ class StructLogAiogramAiohttpSessions(AiohttpSession):
 
 class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
     async def make_request(
-        self,
-        bot: Bot,
-        method: TelegramMethod[TelegramType],
-        timeout: Optional[int] = None,
+            self,
+            bot: Bot,
+            method: TelegramMethod[TelegramType],
+            timeout: Optional[int] = None,
     ) -> TelegramType:
         attempt = 0
         while True:
@@ -72,7 +72,7 @@ class SmartAiogramAiohttpSession(StructLogAiogramAiohttpSessions):
                 if attempt > 6:
                     sleepy_time = 64
                 else:
-                    sleepy_time = 2**attempt
+                    sleepy_time = 2 ** attempt
                 await asyncio.sleep(sleepy_time)
             except Exception as e:
                 raise e

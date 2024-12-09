@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, Integer, BigInteger, DateTime, ForeignKey, Table, event
+
+from sqlalchemy import Column, Integer, BigInteger, DateTime, ForeignKey, Table
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, selectinload
 

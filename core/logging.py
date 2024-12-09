@@ -2,9 +2,10 @@ import logging
 import sys
 import typing
 
-import structlog
-from core.config import conf
 import orjson
+import structlog
+
+from core.config import conf
 
 
 def orjson_dumps(

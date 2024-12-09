@@ -6,7 +6,6 @@ import aiojobs
 from aiogram import Bot, Dispatcher, types
 from aiohttp import web
 
-from core import config
 from core.config import conf
 
 tg_updates_app = web.Application()

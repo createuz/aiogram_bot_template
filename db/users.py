@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship
 
-from .statistics import Statistics
 from db.database import Base, db, cache
+from .statistics import Statistics
 
 
 def generate_uid():

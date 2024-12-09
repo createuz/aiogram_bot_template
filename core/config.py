@@ -1,8 +1,9 @@
 import logging
 import os
 from dataclasses import dataclass, field
-from dotenv import load_dotenv
 from urllib.parse import urlunparse
+
+from dotenv import load_dotenv
 from sqlalchemy.engine import URL
 
 # Load environment variables
@@ -86,7 +87,7 @@ class CacheConfig:
 @dataclass
 class WebhookConfig:
     """Webhook configuration."""
-    enabled: bool = bool(os.getenv("USE_WEBHOOK", True))
+    enabled: bool = bool(os.getenv("USE_WEBHOOK", False))
     address: str = os.getenv("MAIN_WEBHOOK_ADDRESS", "")
     secret_token: str = os.getenv("MAIN_WEBHOOK_SECRET_TOKEN", "")
     listening_host: str = os.getenv("MAIN_WEBHOOK_LISTENING_HOST", "0.0.0.0")
