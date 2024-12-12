@@ -1,3 +1,4 @@
+import os
 import typing
 
 from aiogram.filters import BaseFilter
@@ -28,3 +29,12 @@ class TextFilter(BaseFilter):
         if isinstance(obj, CallbackQuery):
             return obj.data in self.text
         return False
+
+
+class IsAdmin(BaseFilter):
+    def __init__(self) -> None:
+        admins: list[str] = os.getenv("ADMINS", "").split(",")
+        self.admin_ids = [int(admin.strip()) for admin in admins if admin.strip().isdigit()]
+
+    async def __call__(self, message: Message) -> bool:
+        return message.from_user.id in self.admin_ids

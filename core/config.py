@@ -1,4 +1,3 @@
-import logging
 import os
 from dataclasses import dataclass, field
 from urllib.parse import urlunparse
@@ -6,10 +5,7 @@ from urllib.parse import urlunparse
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
 
-# Load environment variables
 load_dotenv()
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -108,7 +104,7 @@ class CustomApiServerConfig:
 class BotConfig:
     """Telegram bot configuration."""
     token: str = os.getenv("BOT_TOKEN", "")
-    logging_level: int = int(os.getenv("LOGGING_LEVEL", logging.INFO))
+    logging_level: int = int(os.getenv("LOGGING_LEVEL", 10))
 
 
 @dataclass
@@ -126,9 +122,8 @@ class AppConfig:
 # Global configuration instance
 conf = AppConfig()
 
-# # Test prints
 # print("Debug Mode:", conf.debug)
-# print("Database URL:", conf.db.build_connection_str())
+print("Database URL:", conf.db.build_connection_str())
 # print("Redis URL:", conf.redis.build_redis_url())
 # if conf.cache.enabled:
 #     print("Cache URL:", conf.cache.build_cache_url())

@@ -3,7 +3,7 @@ import sys
 import typing
 
 import orjson
-import structlog
+import structlog.typing
 
 from core.config import conf
 
