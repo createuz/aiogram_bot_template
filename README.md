@@ -1,216 +1,183 @@
-# aiogram_bot_template 
+# Aiogram Bot Template
 
-## 🚀 Overview
-
-`aiogram_bot_template ` is a robust and modern template for quickly building Telegram bots using the **Aiogram**
-framework (v3). This template is designed to be:
-
-- ⚡ **Fast**: Includes pre-configured settings for rapid development.
-- 🔒 **Secure**: Adopts best practices for handling sensitive data and user interactions.
-- 🌐 **Scalable**: Built with modularity to easily expand features.
+A robust and scalable template for building Telegram bots using the [Aiogram framework](https://docs.aiogram.dev/). This template is structured for clean code organization, maintainability, and quick deployment.
 
 ---
 
-## 🔗 Features
+## 📁 Project Structure
 
-- **Modern Structure**: Clean project organization following best practices.
-- **Environment Variables**: Configuration using `.env` for sensitive data.
-- **Middleware Support**: Includes custom middleware setup for easy customization.
-- **Inline and Command Handlers**: Pre-configured examples of both types of handlers.
-- **Error Handling**: Centralized error management for better debugging.
-- **Logging**: Configured logging for monitoring and debugging.
+```plaintext
+AiogramBotTemplate/
+├─📁 alembic/             # Database migrations
+│ ├─📄 env.py
+│ ├─📄 README
+│ ├─📄 script.py.mako
+│ └─📁 versions/          # Auto-generated migration files
+│   └─📄 first_commit.py
+├─📄 alembic.ini          # Alembic configuration
+├─📄 app.py               # Main entry point of the bot
+├─📁 core/                # Core bot components
+│ ├─📄 chunks.py          # Chunking large messages or data
+│ ├─📄 config.py          # Bot configuration management
+│ ├─📄 filters.py         # Custom filters for handlers
+│ ├─📄 logging.py         # Logging configuration
+│ ├─📄 middleware.py      # Middleware for request handling
+│ ├─📄 states.py          # FSM (Finite State Machine) states
+│ └─📄 __init__.py
+├─📁 db/                  # Database interaction modules
+│ ├─📄 admins.py          # Admin-related database operations
+│ ├─📄 database.py        # Core database connection setup
+│ ├─📄 statistics.py      # Bot statistics tracking
+│ ├─📄 users.py           # User-related database operations
+│ └─📄 __init__.py
+├─📁 handlers/            # Update and command handlers
+│ ├─📁 users/             # User-specific handlers
+│ │ ├─📄 start.py         # /start command implementation
+│ │ └─📄 __init__.py
+│ └─📄 __init__.py
+├─📁 keyboards/           # Inline and reply keyboards
+│ ├─📄 callbacks.py       # Callback data handlers
+│ └─📄 __init__.py
+├─📄 README.md            # Project documentation
+├─📄 test.py              # Testing scripts
+├─📁 utils/               # Utility functions
+│ ├─📄 aiogram_services.py # Aiogram-specific utilities
+│ ├─📄 sessions.py        # Session management
+│ ├─📄 updates.py         # Bot update-related utilities
+│ └─📄 __init__.py
+└─📁 venv/                # Virtual environment (optional, not recommended in production)
+```
 
 ---
 
-## 🔄 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
 
-Ensure you have the following installed on your machine:
-
 - **Python 3.10+**
-- **pip**
+- **PostgreSQL**
+- **Virtual Environment** (recommended)
+- **Aiogram 3.x**
 
 ### Installation
 
-1. Clone the repository:
+1. Clone this repository:
+
    ```bash
-   git clone https://github.com/createuz/aiogram_bot_template.git
-   cd aiogram_bot_template
+   git clone https://github.com/yourusername/AiogramBotTemplate.git
+   cd AiogramBotTemplate
    ```
 
-2. Create and activate a virtual environment:
+2. Create a virtual environment:
+
    ```bash
-   python -m venv venv
-   source venv/bin/activate
+   python3 -m venv venv
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
    ```
 
 3. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    ```
 
-4. Create a `.env` file:
-   ```bash
-   cp .env.example .env
-   ```
-   Update `.env` with your bot token and other configuration values.
+4. Configure your environment:
+   - Create a `.env` file in the root directory.
+   - Add the following variables:
 
-5. Run the bot:
+     ```env
+     BOT_TOKEN=your_telegram_bot_token
+     DATABASE_URL=postgresql+asyncpg://user:password@localhost/dbname
+     ```
+
+5. Initialize the database:
+
+   ```bash
+   alembic upgrade head
+   ```
+
+6. Run the bot:
+
    ```bash
    python app.py
    ```
 
 ---
 
-## 🌐 Project Structure
+## 🛠 Features
 
-```plaintext
-📁 AiogramBotTemplate/
-├─📁 alembic/
-│ ├─📄 env.py
-│ ├─📄 README
-│ ├─📄 script.py.mako
-│ └─📁 versions/
-│   └─📄 2024_12_12_2119-1311dcb39dec_first_commit.py
-├─📄 alembic.ini
-├─📄 app.py
-├─📁 core/
-│ ├─📄 chunks.py
-│ ├─📄 config.py
-│ ├─📄 filters.py
-│ ├─📄 logging.py
-│ ├─📄 middleware.py
-│ ├─📄 states.py
-│ └─📄 __init__.py
-├─📁 db/
-│ ├─📄 admins.py
-│ ├─📄 database.py
-│ ├─📄 statistics.py
-│ ├─📄 users.py
-│ └─📄 __init__.py
-├─📁 handlers/
-│ ├─📁 users/
-│ │ ├─📄 start.py
-│ │ └─📄 __init__.py
-│ └─📄 __init__.py
-├─📁 keyboards/
-│ ├─📄 callbacks.py
-│ └─📄 __init__.py
-├─📄 README.md
-├─📄 test.py
-├─📁 utils/
-│ ├─📄 aiogram_services.py
-│ ├─📄 sessions.py
-│ ├─📄 updates.py
-│ └─📄 __init__.py
-└─📁 venv/
-```
+- **Clean Code Structure:** Organized modules for scalability and maintainability.
+- **Database Integration:** Asynchronous PostgreSQL connection using `asyncpg`.
+- **State Management:** FSM support for handling complex bot flows.
+- **Middleware:** Custom middleware for preprocessing updates.
+- **Keyboard Management:** Flexible inline and reply keyboards.
+- **Logging:** Comprehensive logging setup for debugging and monitoring.
 
 ---
 
-## 🔍 Key Files and Directories
+## 📝 Usage
 
-### `app.py`
+1. **Command Handlers:**
+   Add your custom command handlers in `handlers/users/` or `handlers/`.
 
-The entry point for the bot where the dispatcher and executor are initialized.
+2. **Database Operations:**
+   Use prebuilt modules in the `db/` folder for database queries and CRUD operations.
 
-### `.env`
+3. **Custom Keyboards:**
+   Define your keyboards in `keyboards/` and link them to handlers.
 
-Stores sensitive configuration like the bot token. Example:
-
-```plaintext
-BOT_TOKEN=your_bot_token_here
-```
-
----
-
-## 🚧 Environment Variables
-
-Ensure you set the following variables in your `.env` file:
-
-| Variable    | Description                   |
-|-------------|-------------------------------|
-| `BOT_TOKEN` | Your Telegram Bot API token   |
-| `LOG_LEVEL` | Logging level (default: INFO) |
+4. **Configuration:**
+   Manage bot settings in `core/config.py` or through environment variables.
 
 ---
 
-## 🔧 Available Commands
+## 📚 Documentation
 
-### Pre-configured Commands
-
-| Command  | Description                                 |
-|----------|---------------------------------------------|
-| `/start` | Starts the bot and shows a welcome message. |
-| `/help`  | Displays the help menu.                     |
+- [Aiogram Documentation](https://docs.aiogram.dev/)
+- [Asyncpg Documentation](https://magicstack.github.io/asyncpg/)
+- [Alembic Documentation](https://alembic.sqlalchemy.org/en/latest/)
 
 ---
 
-## 🔧 Customization
+## 🤝 Contribution
 
-### Adding New Handlers
+Contributions are welcome! Please follow these steps:
 
-1. Create a new file in the `handlers/` directory.
-2. Define your handler function:
-   ```python
-   from aiogram import Router
-   from aiogram.types import Message
-   from aiogram.filters import CommandStart
+1. Fork this repository.
+2. Create a new branch:
 
-   router = Router()
-
-   @router.message(CommandStart())
-   async def new_handler(message: Message):
-       await message.answer("This is a new handler!")
-   ```
-3. Register the router in `app.py` or an appropriate location.
-
----
-
-## 🔧 Troubleshooting
-
-- **Issue**: Bot does not respond to commands.
-    - **Solution**: Ensure your bot token is valid and the bot is added to a chat.
-
-- **Issue**: Module not found.
-    - **Solution**: Verify that your virtual environment is activated and dependencies are installed.
-
----
-
-## 🌟 Contributing
-
-1. Fork the repository.
-2. Create a feature branch:
    ```bash
-   git checkout -b feature-name
+   git checkout -b feature-branch
    ```
+
 3. Commit your changes:
+
    ```bash
    git commit -m "Add new feature"
    ```
+
 4. Push to the branch:
+
    ```bash
-   git push origin feature-name
+   git push origin feature-branch
    ```
-5. Open a pull request.
+
+5. Create a pull request.
 
 ---
 
-## 📢 License
+## 📄 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🔗 Links
+## 🌟 Acknowledgements
 
-- **Aiogram Documentation**: [https://docs.aiogram.dev/](https://docs.aiogram.dev/)
-- **Telegram Bot API**: [https://core.telegram.org/bots/api](https://core.telegram.org/bots/api)
+- Special thanks to the [Aiogram team](https://docs.aiogram.dev/) for their excellent framework.
+- Inspired by clean and scalable bot architectures.
 
 ---
 
-## 🙌 Acknowledgements
-
-Thanks to the Aiogram community and contributors for creating a fantastic framework for Telegram bot development.
+_Ready to build your bot? Let’s code!_
 

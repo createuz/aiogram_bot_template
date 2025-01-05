@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from functools import wraps
 
 import asyncpg as asyncpg
@@ -11,16 +12,43 @@ import tenacity
 from aiogram import Dispatcher
 from redis.asyncio import ConnectionPool
 from redis.asyncio import Redis
+from sqlalchemy import DateTime, Integer, MetaData
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.declarative import as_declarative
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column
 from sqlalchemy.orm import declarative_base
 from tenacity import _utils
 
-TIMEOUT_BETWEEN_ATTEMPTS = 2
-MAX_TIMEOUT = 30
-from core import *
+from core import conf
 from utils.sessions import SmartAiogramAiohttpSession
 
+TIMEOUT_BETWEEN_ATTEMPTS = 2
+MAX_TIMEOUT = 30
+
 Base = declarative_base()
+
+# metadata = MetaData(
+#     naming_convention={
+#         'ix': 'ix_%(column_0_label)s',
+#         'uq': 'uq_%(table_name)s_%(column_0_name)s',
+#         'ck': 'ck_%(table_name)s_%(constraint_name)s',
+#         'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
+#         'pk': 'pk_%(table_name)s',
+#     }
+# )
+#
+#
+# @as_declarative(metadata=metadata)
+# class Base:
+#     __allow_unmapped__ = False
+#
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+#     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+#
+#     @classmethod
+#     @declared_attr
+#     def __tablename__(cls) -> str:
+#         return cls.__name__.lower()
 
 
 def before_log(retry_state: tenacity.RetryCallState) -> None:
@@ -155,7 +183,6 @@ async def create_db_connections(dp: Dispatcher) -> None:
         json_loads=orjson.loads,
         logger=dp["aiogram_session_logger"],
     )
-
 
 
 async def close_db_connections(dp: Dispatcher) -> None:
