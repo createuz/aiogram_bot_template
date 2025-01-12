@@ -2,23 +2,23 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
-import structlog
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Update
+from structlog.typing import FilteringBoundLogger
 
 HANDLED_STR = ["Unhandled", "Handled"]
 
 
 class StructLoggingMiddleware(BaseMiddleware):
-    def __init__(self, logger: structlog.typing.FilteringBoundLogger) -> None:
+    def __init__(self, logger: FilteringBoundLogger) -> None:
         self.logger = logger
         super().__init__()
 
     async def __call__(
-        self,
-        handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
-        event: TelegramObject,
-        data: dict[str, Any],
+            self,
+            handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
+            event: TelegramObject,
+            data: dict[str, Any],
     ) -> Any:
         event = cast(Update, event)
         _started_processing_at = time.time()

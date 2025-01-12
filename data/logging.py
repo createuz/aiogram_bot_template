@@ -1,33 +1,24 @@
 import logging
 import sys
-import typing
-from typing import Optional
+from typing import Optional, Callable, Any
 
 import orjson
-import structlog.typing
+import structlog
+from structlog.typing import FilteringBoundLogger, Processor
 
 from data.config import conf
 
 
-def orjson_dumps(v, *, default: typing.Optional[typing.Callable[[typing.Any], typing.Any]] = None) -> Optional[str]:
-    """Custom JSON serialization using orjson."""
-
+def orjson_dumps(v, *, default: Optional[Callable[[Any], Any]] = None) -> Optional[str]:
     return orjson.dumps(v, default=default).decode()
 
 
-def setup_logger() -> structlog.typing.FilteringBoundLogger:
-    """
-    Initializes and configures the logger with enhanced visual formatting
-    for development and structured JSON formatting for production.
-    """
-
+def setup_logger() -> FilteringBoundLogger:
     logging.basicConfig(level=conf.bot.logging_level, stream=sys.stdout, format="%(message)s")
-    shared_processors: list[structlog.typing.Processor] = [
+    shared_processors: list[Processor] = [
         structlog.processors.add_log_level, structlog.processors.TimeStamper(fmt="iso", utc=True)]
 
     def add_color(logger, method_name, event_dict):
-        """Adds color to log levels for better visual distinction."""
-
         level = event_dict.get("level", "").upper()
         colors = {
             "DEBUG": "\033[94m",  # Blue
@@ -48,8 +39,7 @@ def setup_logger() -> structlog.typing.FilteringBoundLogger:
             structlog.processors.dict_tracebacks, structlog.processors.JSONRenderer(serializer=orjson_dumps)]
     processors = shared_processors + environment_processors
     structlog.configure(
-        processors=processors,
-        wrapper_class=structlog.make_filtering_bound_logger(conf.bot.logging_level),
-        logger_factory=structlog.PrintLoggerFactory(),
+        processors=processors, wrapper_class=structlog.make_filtering_bound_logger(conf.bot.logging_level),
+        logger_factory=structlog.PrintLoggerFactory()
     )
     return structlog.get_logger()

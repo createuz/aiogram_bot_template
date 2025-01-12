@@ -7,7 +7,7 @@ from aiohttp import web
 from data import *
 from db.postgres import create_db_connections, close_db_connections
 from handlers import prepare_router
-from middlewares.tgmd import StructLoggingMiddleware
+from data.middleware import StructLoggingMiddleware
 from utils.updates import tg_updates_app
 
 TIMEOUT_BETWEEN_ATTEMPTS = 2
