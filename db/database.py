@@ -3,7 +3,9 @@ import logging
 from functools import wraps
 
 import redis.asyncio as aioredis
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy import URL
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, \
+    AsyncEngine
 from sqlalchemy.orm import declarative_base
 
 from data import conf
@@ -11,9 +13,13 @@ from data import conf
 Base = declarative_base()
 
 
+def async_engine_builder(url: URL | str) -> AsyncEngine:
+    return create_async_engine(url=url, future=True, echo=True, pool_pre_ping=True)
+
+
 class AsyncDatabase:
     def __init__(self, db_url: str):
-        self._engine = create_async_engine(url=db_url, future=True, echo=True, pool_pre_ping=True)
+        self._engine = async_engine_builder(url=db_url)
         self._SessionMaker = async_sessionmaker(bind=self._engine, expire_on_commit=False, class_=AsyncSession)
 
     async def get_session(self):
