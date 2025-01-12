@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, BigInteger, DateTime, ForeignKey, Table
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship, selectinload
 
-from .database import Base, db
+from db.database import Base, db
 
 association = Table(
     'friends', Base.metadata,
@@ -14,7 +14,7 @@ association = Table(
 )
 
 
-class Statistics(Base):
+class Statistic(Base):
     __tablename__ = "statistics"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

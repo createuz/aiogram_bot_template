@@ -7,8 +7,9 @@ from aiogram.fsm.storage.base import DefaultKeyBuilder
 from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.fsm.strategy import FSMStrategy
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import create_async_engine
 
-from core import conf, setup_logger
+from data import conf, setup_logger, TransferData
 from handlers import prepare_router
 from utils.aiogram_services import aiogram_on_startup_polling, aiogram_on_shutdown_polling
 
@@ -34,7 +35,13 @@ def main() -> None:
     dp.startup.register(aiogram_on_startup_polling)
     dp.shutdown.register(aiogram_on_shutdown_polling)
     dp.include_router(prepare_router())
-    asyncio.run(dp.start_polling(bot))
+    asyncio.run(dp.start_polling(
+        bot,
+        allowed_updates=dp.resolve_used_update_types(),
+        **TransferData(
+            engine=create_async_engine(url=conf.db.build_db_url())
+        )
+    ))
 
 
 if __name__ == "__main__":

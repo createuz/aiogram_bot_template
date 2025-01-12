@@ -4,9 +4,10 @@ import aiojobs
 from aiogram import Bot, Dispatcher
 from aiohttp import web
 
-from core import *
+from data import *
+from db.postgres import create_db_connections, close_db_connections
 from handlers import prepare_router
-from db import close_db_connections, create_db_connections
+from middlewares.tgmd import StructLoggingMiddleware
 from utils.updates import tg_updates_app
 
 TIMEOUT_BETWEEN_ATTEMPTS = 2

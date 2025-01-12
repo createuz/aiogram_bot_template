@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from settings import bot, LanguageSelection, AnonMessage, logger, LanguageChange
-from db import User, Statistics, db
+from db import User, Statistic, db
 from keyboards import (
     choose_button, language_keyboard, cancel_sending_kb,
     langs_text, languages, language_changed

@@ -2,13 +2,13 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Optional, List
 
-from sqlalchemy import Integer, String, BigInteger, DateTime, func, update, and_
+from sqlalchemy import Integer, String, BigInteger, DateTime, func, update, and_, Enum, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from db import Statistics, Base
-from db.database import db, cache
+from db.database import db, cache, Base
+from db.models import Statistic
 
 
 def generate_uid() -> str:
@@ -23,10 +23,11 @@ class User(Base):
     chat_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True, nullable=False)
     username: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     first_name: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    is_premium: Mapped[bool] = mapped_column(Boolean, nullable=False)
     language: Mapped[str] = mapped_column(String, nullable=False)
     added_by: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    user_statistics: Mapped["Statistics"] = relationship("Statistics", uselist=False, back_populates="user")
+    user_statistics: Mapped["Statistic"] = relationship("Statistics", uselist=False, back_populates="user")
 
     @classmethod
     async def create_user(

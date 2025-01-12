@@ -1,1 +1,3 @@
-from .start import start as start, prepare_router as prepare_router
+from .start import start, prepare_router
+
+__all__ = ("start", "prepare_router")

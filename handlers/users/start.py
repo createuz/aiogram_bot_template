@@ -1,7 +1,7 @@
 from aiogram import html, types
 from aiogram import Router
 from aiogram.filters import CommandStart
-from core import ChatTypeFilter, TextFilter
+from data import ChatTypeFilter, TextFilter
 
 
 async def start(msg: types.Message) -> None:
