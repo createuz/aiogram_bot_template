@@ -8,8 +8,6 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.fsm.strategy import FSMStrategy
 from redis.asyncio.client import Redis
 
-from data import conf
-
 T = typing.TypeVar("T")
 
 
@@ -20,8 +18,8 @@ def chunks(list_to_split: typing.Sequence[T], chunk_size: int) -> collections.ab
 
 def get_redis_storage(
         redis: Redis,
-        state_ttl=conf.redis.state_ttl,
-        data_ttl=conf.redis.data_ttl
+        state_ttl=3600,
+        data_ttl=7200
 ):
     key_builder = DefaultKeyBuilder(with_bot_id=True)
     return RedisStorage(redis=redis, state_ttl=state_ttl, data_ttl=data_ttl, key_builder=key_builder)

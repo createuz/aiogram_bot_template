@@ -1,12 +1,15 @@
+import logging
 import re
 from urllib import parse
+
 from aiogram import Router, F
 from aiogram.enums import ChatType
-from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from settings import bot, LanguageSelection, AnonMessage, logger, LanguageChange
-from db import User, Statistic, db
+
+from data import LanguageSelection, bot, AnonMessage, LanguageChange
+from db import User, db, Statistic
 from keyboards import (
     choose_button, language_keyboard, cancel_sending_kb,
     langs_text, languages, language_changed
@@ -15,14 +18,12 @@ from keyboards import (
 router = Router()
 
 
-# Utility function to generate a share link
 async def generate_share_link(uid: str, language: str) -> str:
     text = langs_text.get(language).get('share_text')
     encoded_text = parse.quote(text)
     return f"https://t.me/share/url?url={encoded_text}%0A%0A%F0%9F%91%89%20t.me/anonchrobot?start={uid}"
 
 
-# Utility function to validate a URL
 async def is_valid_url(url: str) -> bool:
     return bool(re.match(r'^[a-zA-Z0-9_]{6,20}$', url))
 
@@ -80,14 +81,14 @@ async def start_handler(message: Message, state: FSMContext):
             await state.update_data(uid=identifier, language=language)
             await state.set_state(AnonMessage.waiting_anon_msg)
             user_id = await User.get_chat_id(uid=identifier)
-            await Statistics.update_statistics(chat_id=user_id, clicks=True)
+            await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
-                await Statistics.add_friends(user_id=user_id, friend_id=chat_id)
+                await Statistic.add_friends(user_id=user_id, friend_id=chat_id)
         else:
             user_uid = await User.get_uid(chat_id=chat_id)
             return await send_start_message(chat_id, user_uid, language)
     except Exception as e:
-        logger.exception("Error in start_handler: %s", e)
+        logging.exception("Error in start_handler: %s", e)
 
 
 # Callback handler for language selection
@@ -124,9 +125,9 @@ async def create_user_handler(call: CallbackQuery, state: FSMContext):
                 disable_web_page_preview=True
             )
             user_id = await User.get_chat_id(uid)
-            await Statistics.update_statistics(chat_id=user_id, clicks=True)
+            await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
-                await Statistics.add_friends(user_id, chat_id)
+                await Statistic.add_friends(user_id, chat_id)
 
             await state.update_data(uid=uid, language=language)
             await state.set_state(AnonMessage.waiting_anon_msg)
@@ -135,10 +136,9 @@ async def create_user_handler(call: CallbackQuery, state: FSMContext):
             await send_start_message(chat_id, user_uid, language, call.message.message_id)
 
     except Exception as e:
-        logger.exception("Error in create_user_handler: %s", e)
+        logging.exception("Error in create_user_handler: %s", e)
 
 
-# Command handler for /lang
 @router.message(Command("lang"), F.chat.type == ChatType.PRIVATE)
 async def change_language_handler(message: Message, state: FSMContext):
     await message.delete()
@@ -147,12 +147,11 @@ async def change_language_handler(message: Message, state: FSMContext):
         await bot.send_message(chat_id=message.chat.id, text=choose_button, reply_markup=language_keyboard)
         await state.set_state(LanguageChange.select_language)
     except Exception as e:
-        logger.exception("Error in change_language_handler: %s", e)
+        logging.exception("Error in change_language_handler: %s", e)
         await bot.send_message(chat_id=message.chat.id, text="Please use the /start command to select a language.",
                                protect_content=True)
 
 
-# Callback handler for language change
 @router.callback_query(F.data.in_(languages.keys()), state=LanguageChange.select_language, chat_type=ChatType.PRIVATE)
 async def process_change_language(call: CallbackQuery, state: FSMContext):
     chat_id = call.message.chat.id
@@ -164,17 +163,15 @@ async def process_change_language(call: CallbackQuery, state: FSMContext):
         await bot.answer_callback_query(call.id, f"✅ {language_changed[call.data]}")
         await send_start_message(chat_id, uid, language, call.message.message_id)
     except Exception as e:
-        logger.exception("Error in process_change_language: %s", e)
+        logging.exception("Error in process_change_language: %s", e)
 
 
-# Command handler for /help
 @router.message(Command("help"), state="*")
 async def help_handler(message: Message, state: FSMContext):
     await message.delete()
     await state.clear()
 
 
-# Command handler for /url
 @router.message(F.text.startswith("/url"), F.chat.type == ChatType.PRIVATE, state="*")
 async def handle_url_command(message: Message, state: FSMContext):
     try:
@@ -200,4 +197,4 @@ async def handle_url_command(message: Message, state: FSMContext):
                 )
         await state.clear()
     except Exception as e:
-        logger.exception("Error in handle_url_command: %s", e)
+        logging.exception("Error in handle_url_command: %s", e)

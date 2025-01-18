@@ -1,20 +1,17 @@
 import asyncio
 import logging
+import sys
 
-from aiogram import Bot
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
 from redis.asyncio import Redis
 
-from data import conf, setup_logger, TransferData,get_redis_storage, get_dispatcher
-from db.database import async_engine_builder
+from data import bot, conf, setup_logger, get_redis_storage, get_dispatcher
+from db import async_engine_builder, TransferData
 from handlers import prepare_router
 from utils.aiogram_services import aiogram_on_startup_polling, aiogram_on_shutdown_polling
 
 
 async def main() -> None:
     aiogram_session_logger = setup_logger().bind(type="aiogram_session")
-    bot = Bot(token=conf.bot.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     storage = get_redis_storage(
         redis=Redis(
             host=conf.redis.host,
@@ -36,5 +33,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=conf.logging_level)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     asyncio.run(main())

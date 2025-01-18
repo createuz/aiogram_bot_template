@@ -1,24 +1,14 @@
 import os
 from dataclasses import dataclass, field
-from typing import TypedDict
 from urllib.parse import urlunparse
 
 from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from dotenv import load_dotenv
 from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import AsyncEngine
-
-from db.database import db
 
 load_dotenv()
-
-
-class TransferData(TypedDict):
-    """Common transfer data."""
-
-    engine: AsyncEngine
-    db: db
-    bot: Bot
 
 
 @dataclass
@@ -137,20 +127,10 @@ class AppConfig:
     cache: CacheConfig = field(default_factory=CacheConfig)
     webhook: WebhookConfig = field(default_factory=WebhookConfig)
     custom_api_server: CustomApiServerConfig = field(default_factory=CustomApiServerConfig)
-    bot: BotConfig = field(default_factory=BotConfig)
+    bot_token: BotConfig = field(default_factory=BotConfig)
 
 
 # Global configuration instance
-conf = AppConfig()
-
-print("Database URL:", conf.db.build_db_url())
-
-# print("Debug Mode:", conf.debug)
-# print("Redis URL:", conf.redis.build_redis_url())
-# if conf.cache.enabled:
-#     print("Cache URL:", conf.cache.build_cache_url())
-# if conf.webhook.enabled:
-#     print("Webhook Address:", conf.webhook.address)
-# if conf.custom_api_server.enabled:
-#     print("Custom API Base URL:", conf.custom_api_server.base_url)
-# print("Bot Token:", conf.bot.token)
+conf: AppConfig = AppConfig()
+bot: Bot = Bot(token=conf.bot_token.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+# print("Database URL:", conf.db.build_db_url())

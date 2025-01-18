@@ -1,11 +1,13 @@
 import json
 import logging
+from contextlib import asynccontextmanager
 from functools import wraps
+from typing import AsyncIterator, TypedDict
 
-import redis.asyncio as aioredis
+from aiogram import Bot
+from redis.asyncio import Redis
 from sqlalchemy import URL
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker, \
-    AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 
 from data import conf
@@ -14,29 +16,61 @@ Base = declarative_base()
 
 
 def async_engine_builder(url: URL | str) -> AsyncEngine:
-    return create_async_engine(url=url, future=True, echo=True, pool_pre_ping=True)
+    return create_async_engine(
+        url=url,
+        future=True,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+    )
 
 
 class AsyncDatabase:
     def __init__(self, db_url: str):
         self._engine = async_engine_builder(url=db_url)
-        self._SessionMaker = async_sessionmaker(bind=self._engine, expire_on_commit=False, class_=AsyncSession)
+        self._SessionMaker = async_sessionmaker(
+            bind=self._engine,
+            expire_on_commit=False,
+            future=True,  # 2.0 API uslubi
+            autoflush=False,  # Qo'lda sinxronlash
+            autocommit=False,  # Qo'lda commit
+            class_=AsyncSession  # Asinxron sessiya klassi
+        )
 
-    async def get_session(self):
+    @asynccontextmanager
+    async def get_session(self) -> AsyncIterator[AsyncSession]:
         async with self._SessionMaker() as session:
-            yield session
+            try:
+                yield session
+            except Exception as e:
+                await session.rollback()
+                raise e
+            finally:
+                await session.close()
 
     async def init(self):
         async with self._engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
+    async def dispose(self):
+        await self._engine.dispose()
 
-db = AsyncDatabase(db_url=conf.db.build_db_url())
+
+db: AsyncDatabase = AsyncDatabase(db_url=conf.db.build_db_url())
+
+
+class TransferData(TypedDict):
+    """Common transfer data."""
+
+    engine: AsyncEngine
+    db: db
+    bot: Bot
 
 
 class RedisCache:
     def __init__(self, url: str):
-        self._redis = aioredis.from_url(url=url, decode_responses=True)
+        self._redis = Redis.from_url(url=url, decode_responses=True)
 
     async def get(self, key: str):
         value = await self._redis.get(key)
