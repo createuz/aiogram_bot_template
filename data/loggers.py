@@ -1,4 +1,4 @@
-import logging
+import logging as log
 import sys
 from typing import Optional, Callable, Any
 
@@ -14,7 +14,8 @@ def orjson_dumps(v, *, default: Optional[Callable[[Any], Any]] = None) -> Option
 
 
 def setup_logger() -> FilteringBoundLogger:
-    logging.basicConfig(level=conf.bot.logging_level, stream=sys.stdout, format="%(message)s")
+    import logging
+    logging.basicConfig(level=conf.bot_token.logging_level, stream=sys.stdout, format="%(message)s")
     shared_processors: list[Processor] = [
         structlog.processors.add_log_level, structlog.processors.TimeStamper(fmt="iso", utc=True)]
 
@@ -39,7 +40,11 @@ def setup_logger() -> FilteringBoundLogger:
             structlog.processors.dict_tracebacks, structlog.processors.JSONRenderer(serializer=orjson_dumps)]
     processors = shared_processors + environment_processors
     structlog.configure(
-        processors=processors, wrapper_class=structlog.make_filtering_bound_logger(conf.bot.logging_level),
+        processors=processors, wrapper_class=structlog.make_filtering_bound_logger(conf.bot_token.logging_level),
         logger_factory=structlog.PrintLoggerFactory()
     )
     return structlog.get_logger()
+
+
+log.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=log.INFO)
+logger = log.getLogger(__name__)

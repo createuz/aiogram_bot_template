@@ -1,12 +1,13 @@
 import asyncio
+from typing import Tuple
 
 import aiojobs
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 from aiohttp import web
 
 from data import *
 from db.postgres import create_db_connections, close_db_connections
-from handlers import prepare_router
+from handlers import user_router, anon_msg_router, statistic_router, ads_router, panel_router
 from data.middleware import StructLoggingMiddleware
 from utils.updates import tg_updates_app
 
@@ -14,8 +15,14 @@ TIMEOUT_BETWEEN_ATTEMPTS = 2
 MAX_TIMEOUT = 30
 
 
+def register_routers(dp: Dispatcher, routers: Tuple[Router, ...]) -> None:
+    for router in routers:
+        dp.include_router(router)
+
+
 def setup_handlers(dp: Dispatcher) -> None:
-    dp.include_router(prepare_router())
+    routers = (user_router, anon_msg_router, statistic_router, ads_router, panel_router)
+    register_routers(dp, routers)
 
 
 def setup_middlewares(dp: Dispatcher) -> None:

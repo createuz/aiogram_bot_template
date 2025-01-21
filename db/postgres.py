@@ -165,7 +165,7 @@ async def setup_database(logger):
         port=conf.db.port,
         user=conf.db.user,
         password=conf.db.password,
-        database=conf.db.database,
+        database=conf.db.name,
     )
     await db.init()
     logger.info("Database setup completed.")

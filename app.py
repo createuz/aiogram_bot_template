@@ -6,7 +6,6 @@ from redis.asyncio import Redis
 
 from data import bot, conf, setup_logger, get_redis_storage, get_dispatcher
 from db import async_engine_builder, TransferData
-from handlers import prepare_router
 from utils.aiogram_services import aiogram_on_startup_polling, aiogram_on_shutdown_polling
 
 
@@ -24,7 +23,6 @@ async def main() -> None:
     dp["aiogram_session_logger"] = aiogram_session_logger
     dp.startup.register(aiogram_on_startup_polling)
     dp.shutdown.register(aiogram_on_shutdown_polling)
-    dp.include_router(prepare_router())
     await dp.start_polling(
         bot,
         allowed_updates=dp.resolve_used_update_types(),

@@ -24,87 +24,15 @@ class AddAdmin(StatesGroup):
     waiting_for_miqdor = State
 
 
-class Channelstate(StatesGroup):
-    send_all_1 = State()
-    send_all_2 = State()
-    send_all_3 = State()
-    send_all_4 = State()
-
-
-class SendText(StatesGroup):
-    text = State()
-    tasdiqlash = State()
-    send_all_1 = State()
-    send_all_2 = State()
-    send_all_3 = State()
-    send_all_4 = State()
-    next_call_2 = State()
-    next_call_3 = State()
-    next_call_4 = State()
-    next_call_5 = State()
-
-    waiting_for_is_not_btn = State()
-    waiting_for_new_btn = State()
+class AdsStates(StatesGroup):
+    waiting_for_media = State()
     waiting_for_caption = State()
-    waiting_kb_1 = State()
-    waiting_kb_2 = State()
-    waiting_kb_3 = State()
-    waiting_kb_4 = State()
-    waiting_url_1 = State()
-    waiting_url_2 = State()
-    waiting_url_3 = State()
-    waiting_url_4 = State()
+    waiting_for_button_name = State()
+    waiting_for_button_url = State()
+    confirm_buttons = State()
+    confirm_send = State()
+    waiting_for_media_type = State()
 
 
-class SendPhoto(StatesGroup):
-    photo = State()
-    tasdiqlash = State()
-    send_all_1 = State()
-    send_all_2 = State()
-    send_all_3 = State()
-    send_all_4 = State()
-    next_call_2 = State()
-    next_call_3 = State()
-    next_call_4 = State()
-    next_call_5 = State()
-
-    waiting_for_is_not_btn = State()
-    waiting_for_new_btn = State()
-    waiting_for_caption = State()
-    waiting_kb_1 = State()
-    waiting_kb_2 = State()
-    waiting_kb_3 = State()
-    waiting_kb_4 = State()
-    waiting_url_1 = State()
-    waiting_url_2 = State()
-    waiting_url_3 = State()
-    waiting_url_4 = State()
-
-
-class SendVideo(StatesGroup):
-    video = State()
-    tasdiqlash = State()
-    send_all_1 = State()
-    send_all_2 = State()
-    send_all_3 = State()
-    send_all_4 = State()
-    next_call_2 = State()
-    next_call_3 = State()
-    next_call_4 = State()
-    next_call_5 = State()
-
-    waiting_for_is_not_btn = State()
-    waiting_for_new_btn = State()
-    waiting_for_caption = State()
-    waiting_kb_1 = State()
-    waiting_kb_2 = State()
-    waiting_kb_3 = State()
-    waiting_kb_4 = State()
-    waiting_url_1 = State()
-    waiting_url_2 = State()
-    waiting_url_3 = State()
-    waiting_url_4 = State()
-
-
-class Backup(StatesGroup):
-    wait_txt_file = State()
+class BackupStates(StatesGroup):
+    waiting_for_txt_file = State()

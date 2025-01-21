@@ -22,7 +22,7 @@ async def execute(req: web.Request) -> web.Response:
     ):
         raise aiohttp.web.HTTPNotFound()
     dp: Dispatcher = req.app["dp"]
-    if not secrets.compare_digest(req.match_info["token"], conf.bot.token):
+    if not secrets.compare_digest(req.match_info["token"], conf.bot_token.token):
         raise aiohttp.web.HTTPNotFound()
     scheduler: aiojobs.Scheduler = req.app["scheduler"]
     if scheduler.pending_count >= conf.webhook.max_updates_in_queue:

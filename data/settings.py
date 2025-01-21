@@ -1,7 +1,8 @@
 import collections.abc
+import re
 import typing
 
-from aiogram import Dispatcher
+from aiogram import Dispatcher, types
 from aiogram.fsm.storage.base import BaseEventIsolation, BaseStorage, DefaultKeyBuilder
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import RedisStorage
@@ -36,3 +37,18 @@ def get_dispatcher(
         events_isolation=event_isolation,
     )
     return dp
+
+
+def is_valid_url(url: str) -> bool:
+    return bool(re.match(r'^[a-zA-Z0-9_]{6,20}$', url))
+
+
+MEDIA_TYPES = {
+    types.ContentType.TEXT: 'text',
+    types.ContentType.PHOTO: "photo",
+    types.ContentType.VIDEO: "video",
+    types.ContentType.AUDIO: "audio",
+    types.ContentType.VOICE: "voice",
+    types.ContentType.VIDEO_NOTE: "video_note",
+    types.ContentType.ANIMATION: "animation",
+}

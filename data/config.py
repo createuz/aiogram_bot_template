@@ -130,6 +130,8 @@ class AppConfig:
     bot_token: BotConfig = field(default_factory=BotConfig)
 
 
+ADMIN = 5383531061
+
 # Global configuration instance
 conf: AppConfig = AppConfig()
 bot: Bot = Bot(token=conf.bot_token.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
