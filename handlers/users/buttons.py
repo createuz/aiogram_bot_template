@@ -22,7 +22,7 @@ def get_cancel_keyboard(language: str):
     }
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(buttons.get(language, "🗑 Cancel"), callback_data="bekor_qilish")]
+            [InlineKeyboardButton(text=buttons[language], callback_data="cancel")]
         ]
     )
 

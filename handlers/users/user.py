@@ -70,7 +70,7 @@ async def start_handler(message: Message, state: FSMContext):
                 disable_web_page_preview=True
             )
             user_id = await User.get_chat_id(identifier)
-            await Statistic.update_statistics(user_id, clicks=True)
+            await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
                 await Statistic.add_friends(user_id, chat_id)
 
