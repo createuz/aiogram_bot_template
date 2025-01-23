@@ -61,7 +61,6 @@ async def start_handler(message: Message, state: FSMContext):
     try:
         language = await User.get_language(chat_id)
         if not language:
-            print('ketti')
             return await send_language_selection(chat_id, state, identifier)
         if identifier:
             if not await User.check_uid(identifier):

@@ -13,7 +13,6 @@ anon_msg_router = Router()
 
 
 async def send_anon_message(chat_id: int, content_type: str, message: Message, reply_to_message_id: int = None):
-    """Anonim xabar yuborish uchun optimallashtirilgan funksiya."""
     try:
         language = await User.get_language(chat_id)
         caption = langs_text[language]['new_anon1'].format(
@@ -28,7 +27,7 @@ async def send_anon_message(chat_id: int, content_type: str, message: Message, r
                 reply_to_message_id=reply_to_message_id,
             )
         elif content_type == 'photo':
-            file_id = message.photo[-1].file_id  # Oxirgi rasmni olish
+            file_id = message.photo[-1].file_id
         elif hasattr(message, content_type):
             file_id = getattr(message, content_type).file_id
         if file_id:
@@ -46,7 +45,6 @@ async def send_anon_message(chat_id: int, content_type: str, message: Message, r
 
 @anon_msg_router.message(F.text | F.content_type.in_(MEDIA_TYPES.keys()), AnonMessage.waiting_anon_msg)
 async def handler_media(message: Message, state: FSMContext):
-    """Anonim xabarni qabul qilish va yuborish."""
     user1_chat_id = message.chat.id
     try:
         data = await state.get_data()
@@ -66,7 +64,6 @@ async def handler_media(message: Message, state: FSMContext):
 
 @anon_msg_router.message(F.reply_to_message & F.content_type.in_(MEDIA_TYPES.keys()))
 async def reply_message_handler(message: Message, state: FSMContext):
-    """Javob sifatida yuborilgan xabarni qayta ishlash."""
     user2_chat_id = message.chat.id
     try:
         data = await state.get_data()
@@ -92,7 +89,6 @@ async def reply_message_handler(message: Message, state: FSMContext):
 
 @anon_msg_router.callback_query(F.data.startswith('send_more_'), StateFilter('*'))
 async def send_more_query_handler(call: CallbackQuery, state: FSMContext):
-    """Yana xabar yuborish uchun so'rovni ishlash."""
     try:
         await call.message.delete()
         uid = call.data.split('send_more_')[1]
