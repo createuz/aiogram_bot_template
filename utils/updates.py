@@ -40,4 +40,6 @@ async def execute(req: web.Request) -> web.Response:
     return web.Response()
 
 
-tg_updates_app.add_routes([web.post("/bot/{token}", execute)])
+webhook_path = f"/webhook/{conf.bot_token.token}"
+tg_updates_app.add_routes([web.post(webhook_path, execute)])
+# tg_updates_app.router.add_post(f"/webhook/{conf.bot_token.token}", execute)

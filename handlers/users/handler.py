@@ -105,6 +105,6 @@ async def send_more_query_handler(call: CallbackQuery, state: FSMContext):
             disable_web_page_preview=True,
         )
         await state.update_data(uid=uid, language=language)
-        await AnonMessage.waiting_anon_msg.set()
+        await state.set_state(AnonMessage.waiting_anon_msg)
     except Exception as e:
         logger.exception("Send more callbackni qayta ishlashda xatolik yuz berdi: %s", e)

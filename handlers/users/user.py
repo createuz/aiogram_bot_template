@@ -22,7 +22,10 @@ async def generate_share_link(uid: str, language: str) -> str:
 
 async def send_language_selection(chat_id: int, state: FSMContext, identifier=None):
     await bot.send_message(chat_id, choose_button, reply_markup=get_language_keyboard())
-    await state.update_data(added_by=identifier or 'true', uid=identifier or None)
+    await state.update_data(
+        added_by=identifier if identifier else 'true',
+        uid=identifier if identifier else None
+    )
     await state.set_state(LanguageSelection.select_language)
 
 
@@ -58,6 +61,7 @@ async def start_handler(message: Message, state: FSMContext):
     try:
         language = await User.get_language(chat_id)
         if not language:
+            print('ketti')
             return await send_language_selection(chat_id, state, identifier)
         if identifier:
             if not await User.check_uid(identifier):
@@ -84,48 +88,33 @@ async def start_handler(message: Message, state: FSMContext):
         logger.exception("Error in start_handler: %s", e)
 
 
-@user_router.callback_query(F.data.in_(languages.keys()), LanguageSelection.select_language,
-                            F.chat.type == ChatType.PRIVATE)
+@user_router.callback_query(F.data.in_(languages.keys()), LanguageSelection.select_language)
 async def create_user_handler(call: CallbackQuery, state: FSMContext):
     chat_id = call.message.chat.id
     language = languages[call.data]
+    print(f'tanlandi:  {language}')
 
     try:
         data = await state.get_data()
+        is_premium: bool = True if call.message.from_user.is_premium else False
         async with db.get_session() as session:
             new_user = await User.create_user(
                 session=session,
                 chat_id=chat_id,
                 username=call.message.chat.username,
                 first_name=call.message.chat.first_name,
+                is_premium=is_premium,
                 language=language,
                 added_by=data.get('added_by')
             )
+            print(new_user)
             await session.refresh(new_user)
             await User.create_statistics(new_user, session)
-
         await bot.answer_callback_query(call.id, f"✅ {language_changed[call.data]}")
-
-        # uid = data.get('uid')
-        # if uid and await User.check_uid(uid):
-        #     await bot.send_message(
-        #         chat_id, langs_text[language]['anon_message'],
-        #         reply_markup=cancel_sending_kb[language], disable_web_page_preview=True
-        #     )
-        #     user_id = await User.get_chat_id(uid)
-        #     await Statistic.update_statistics(user_id, clicks=True)
-        #     if user_id != chat_id:
-        #         await Statistic.add_friends(user_id, chat_id)
-        #     await state.update_data(uid=uid, language=language)
-        #     await state.set_state(AnonMessage.waiting_anon_msg)
-        # else:
-        #     user_uid = await User.get_uid(chat_id)
-        #     await send_start_message(chat_id, user_uid, language, call.message.message_id)
         if uid := data.get('uid'):
             if not await User.check_uid(uid):
                 user_uid = await User.get_uid(chat_id)
                 return await send_start_message(chat_id, user_uid, language, call.message.message_id)
-
             await bot.send_message(
                 chat_id=chat_id,
                 text=langs_text[language]['anon_message'],
@@ -136,7 +125,6 @@ async def create_user_handler(call: CallbackQuery, state: FSMContext):
             await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
                 await Statistic.add_friends(user_id, chat_id)
-
             await state.update_data(uid=uid, language=language)
             await state.set_state(AnonMessage.waiting_anon_msg)
         else:
@@ -151,15 +139,14 @@ async def change_language_handler(message: Message, state: FSMContext):
     await message.delete()
     await state.clear()
     try:
-        await send_language_selection(message.chat.id, state)
+        await bot.send_message(chat_id=message.chat.id, text=choose_button, reply_markup=get_language_keyboard())
+        await state.set_state(LanguageChange.select_language)
     except Exception as e:
         logger.exception("Error in change_language_handler: %s", e)
-        await bot.send_message(chat_id=message.chat.id, text="Please use the /start command to select a language.",
-                               protect_content=True)
+        await bot.send_message(chat_id=message.chat.id, text="Please use the /start command to select a language.")
 
 
-@user_router.callback_query(F.data.in_(languages.keys()), LanguageChange.select_language,
-                            F.chat.type == ChatType.PRIVATE)
+@user_router.callback_query(F.data.in_(languages.keys()), LanguageChange.select_language)
 async def process_change_language(call: CallbackQuery, state: FSMContext):
     chat_id = call.message.chat.id
     try:

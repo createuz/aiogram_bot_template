@@ -2,17 +2,15 @@ import asyncio
 from typing import Tuple
 
 import aiojobs
-from aiogram import Bot, Dispatcher, Router
+from aiogram import Bot, Dispatcher
+from aiogram import Router
 from aiohttp import web
 
-from data import *
+from data import setup_logger, conf
+from data.middleware import StructLoggingMiddleware
 from db.postgres import create_db_connections, close_db_connections
 from handlers import user_router, anon_msg_router, statistic_router, ads_router, panel_router
-from data.middleware import StructLoggingMiddleware
 from utils.updates import tg_updates_app
-
-TIMEOUT_BETWEEN_ATTEMPTS = 2
-MAX_TIMEOUT = 30
 
 
 def register_routers(dp: Dispatcher, routers: Tuple[Router, ...]) -> None:
@@ -73,12 +71,14 @@ async def aiohttp_on_shutdown(app: web.Application) -> None:
 
 async def aiogram_on_startup_webhook(dispatcher: Dispatcher, bot: Bot) -> None:
     await setup_aiogram(dispatcher)
-    webhook_logger = dispatcher["aiogram_logger"].bind(webhook_url=conf.webhook.address)
+    webhook_logger = dispatcher["aiogram_logger"].bind(webhook_url=conf.webhook.url)
     webhook_logger.debug("Configuring webhook")
+    webhook_url = f"{conf.webhook.url}/webhook/{conf.bot_token.token}"
+    webhook_path = f"/webhook/{conf.bot_token.token}"
     await bot.set_webhook(
-        url=conf.webhook.address.format(token=conf.bot.token, bot_id=conf.bot.token.split(":")[0]),
+        url=webhook_url,
         allowed_updates=dispatcher.resolve_used_update_types(),
-        secret_token=conf.webhook.secret_token
+        secret_token=conf.webhook.secret_token,
     )
     webhook_logger.info("Configured webhook")
 
@@ -108,7 +108,7 @@ async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot) -> None:
 async def setup_aiohttp_app(bot: Bot, dp: Dispatcher) -> web.Application:
     scheduler = aiojobs.Scheduler()
     app = web.Application()
-    subapps: list[tuple[str, web.Application]] = [("/tg/webhooks/", tg_updates_app)]
+    subapps: list[tuple[str, web.Application]] = [("/bot/webhook/", tg_updates_app)]
     for prefix, subapp in subapps:
         subapp["bot"] = bot
         subapp["dp"] = dp

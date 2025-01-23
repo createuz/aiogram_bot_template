@@ -15,7 +15,10 @@ def orjson_dumps(v, *, default: Optional[Callable[[Any], Any]] = None) -> Option
 
 def setup_logger() -> FilteringBoundLogger:
     import logging
-    logging.basicConfig(level=conf.bot_token.logging_level, stream=sys.stdout, format="%(message)s")
+    logging.basicConfig(
+        level=conf.bot_token.logging_level, stream=sys.stdout,
+        format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s'
+    )
     shared_processors: list[Processor] = [
         structlog.processors.add_log_level, structlog.processors.TimeStamper(fmt="iso", utc=True)]
 

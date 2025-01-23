@@ -92,11 +92,11 @@ class WebhookConfig:
     """Webhook configuration."""
 
     enabled: bool = bool(os.getenv("USE_WEBHOOK", False))
-    address: str = os.getenv("MAIN_WEBHOOK_ADDRESS", "")
-    secret_token: str = os.getenv("MAIN_WEBHOOK_SECRET_TOKEN", "")
-    listening_host: str = os.getenv("MAIN_WEBHOOK_LISTENING_HOST", "0.0.0.0")
-    listening_port: int = int(os.getenv("MAIN_WEBHOOK_LISTENING_PORT", 8443))
-    max_updates_in_queue: int = int(os.getenv("MAX_UPDATES_IN_QUEUE", 100))
+    url: str = os.getenv("WEBHOOK_URL", "")
+    secret_token: str = os.getenv("WEBHOOK_SECRET_TOKEN", "")
+    host: str = os.getenv("WEBHOOK_HOST", "0.0.0.0")
+    port: int = int(os.getenv("WEBHOOK_PORT", 8443))
+    max_updates_in_queue: int = int(os.getenv("MAX_UPDATES_IN_QUEUE", 1000))
 
 
 @dataclass
