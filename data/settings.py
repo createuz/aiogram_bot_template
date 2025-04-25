@@ -18,12 +18,10 @@ def chunks(list_to_split: typing.Sequence[T], chunk_size: int) -> collections.ab
 
 
 def get_redis_storage(
-        redis: Redis,
-        state_ttl=3600,
-        data_ttl=7200
+        redis: Redis
 ):
     key_builder = DefaultKeyBuilder(with_bot_id=True)
-    return RedisStorage(redis=redis, state_ttl=state_ttl, data_ttl=data_ttl, key_builder=key_builder)
+    return RedisStorage(redis=redis,  key_builder=key_builder)
 
 
 def get_dispatcher(

@@ -75,7 +75,7 @@ async def start_handler(message: Message, state: FSMContext):
             user_id = await User.get_chat_id(identifier)
             await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
-                await Statistic.add_friends(user_id, chat_id)
+                await Statistic.add_friends(user_id=user_id, friend_id=chat_id)
 
             await state.update_data(uid=identifier, language=language)
             await state.set_state(AnonMessage.waiting_anon_msg)
@@ -91,8 +91,6 @@ async def start_handler(message: Message, state: FSMContext):
 async def create_user_handler(call: CallbackQuery, state: FSMContext):
     chat_id = call.message.chat.id
     language = languages[call.data]
-    print(f'tanlandi:  {language}')
-
     try:
         data = await state.get_data()
         is_premium: bool = True if call.message.from_user.is_premium else False
@@ -106,14 +104,18 @@ async def create_user_handler(call: CallbackQuery, state: FSMContext):
                 language=language,
                 added_by=data.get('added_by')
             )
-            print(new_user)
             await session.refresh(new_user)
             await User.create_statistics(new_user, session)
         await bot.answer_callback_query(call.id, f"✅ {language_changed[call.data]}")
         if uid := data.get('uid'):
             if not await User.check_uid(uid):
                 user_uid = await User.get_uid(chat_id)
-                return await send_start_message(chat_id, user_uid, language, call.message.message_id)
+                return await send_start_message(
+                    chat_id=chat_id,
+                    user_uid=user_uid,
+                    language=language,
+                    message_id=call.message.message_id
+                )
             await bot.send_message(
                 chat_id=chat_id,
                 text=langs_text[language]['anon_message'],
@@ -123,12 +125,17 @@ async def create_user_handler(call: CallbackQuery, state: FSMContext):
             user_id = await User.get_chat_id(uid)
             await Statistic.update_statistics(chat_id=user_id, clicks=True)
             if user_id != chat_id:
-                await Statistic.add_friends(user_id, chat_id)
+                await Statistic.add_friends(user_id=user_id, friend_id=chat_id)
             await state.update_data(uid=uid, language=language)
             await state.set_state(AnonMessage.waiting_anon_msg)
         else:
             user_uid = await User.get_uid(chat_id)
-            await send_start_message(chat_id, user_uid, language, call.message.message_id)
+            await send_start_message(
+                chat_id=chat_id,
+                user_uid=user_uid,
+                language=language,
+                message_id=call.message.message_id
+            )
     except Exception as e:
         logger.exception("Error in create_user_handler: %s", e)
 
@@ -154,7 +161,12 @@ async def process_change_language(call: CallbackQuery, state: FSMContext):
         uid = await User.get_uid(chat_id)
         await state.clear()
         await bot.answer_callback_query(call.id, f"✅ {language_changed[call.data]}")
-        await send_start_message(chat_id, uid, language, call.message.message_id)
+        await send_start_message(
+            chat_id=chat_id,
+            user_uid=uid,
+            language=language,
+            message_id=call.message.message_id
+        )
     except Exception as e:
         logger.exception("Error in process_change_language: %s", e)
 

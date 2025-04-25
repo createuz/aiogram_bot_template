@@ -71,12 +71,15 @@ async def aiohttp_on_shutdown(app: web.Application) -> None:
 
 async def aiogram_on_startup_webhook(dispatcher: Dispatcher, bot: Bot) -> None:
     await setup_aiogram(dispatcher)
-    webhook_logger = dispatcher["aiogram_logger"].bind(webhook_url=conf.webhook.url)
+    webhook_logger = dispatcher["aiogram_logger"].bind(
+        webhook_url=conf.webhook.url,
+    )
     webhook_logger.debug("Configuring webhook")
-    webhook_url = f"{conf.webhook.url}/webhook/{conf.bot_token.token}"
-    webhook_path = f"/webhook/{conf.bot_token.token}"
     await bot.set_webhook(
-        url=webhook_url,
+        url=conf.webhook.url.format(
+            token=conf.bot_token.token,
+            bot_id=conf.bot_token.token.split(":")[0],
+        ),
         allowed_updates=dispatcher.resolve_used_update_types(),
         secret_token=conf.webhook.secret_token,
     )
@@ -92,7 +95,7 @@ async def aiogram_on_shutdown_webhook(dispatcher: Dispatcher, bot: Bot) -> None:
 
 
 async def aiogram_on_startup_polling(dispatcher: Dispatcher, bot: Bot) -> None:
-    await bot.delete_webhook(drop_pending_updates=False)
+    await bot.delete_webhook(drop_pending_updates=True)
     await setup_aiogram(dispatcher)
     dispatcher["aiogram_logger"].info("Started polling")
 
@@ -108,7 +111,7 @@ async def aiogram_on_shutdown_polling(dispatcher: Dispatcher, bot: Bot) -> None:
 async def setup_aiohttp_app(bot: Bot, dp: Dispatcher) -> web.Application:
     scheduler = aiojobs.Scheduler()
     app = web.Application()
-    subapps: list[tuple[str, web.Application]] = [("/bot/webhook/", tg_updates_app)]
+    subapps: list[tuple[str, web.Application]] = [("/tg/webhooks/", tg_updates_app), ]
     for prefix, subapp in subapps:
         subapp["bot"] = bot
         subapp["dp"] = dp

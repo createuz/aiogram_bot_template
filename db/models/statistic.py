@@ -40,21 +40,22 @@ class Statistic(Base):
     )
 
     @classmethod
-    async def add_friends(cls, session: AsyncSession, user_id: int, friend_id: int):
+    async def add_friends(cls, user_id: int, friend_id: int):
         if user_id == friend_id:
             raise ValueError("A user cannot be friends with themselves.")
         try:
-            stmt = select(cls).where(cls.chat_id.in_([user_id, friend_id])).options(selectinload(cls.friends))
-            result = await session.execute(stmt)
-            users = result.scalars().all()
-            if len(users) != 2:
-                raise ValueError("One or both users not found.")
-            user1, user2 = users
-            if user2 not in user1.friends:
-                user1.friends.append(user2)
-            if user1 not in user2.friends:
-                user2.friends.append(user1)
-            await session.commit()
+            async with db.get_session() as session:
+                stmt = select(cls).where(cls.chat_id.in_([user_id, friend_id])).options(selectinload(cls.friends))
+                result = await session.execute(stmt)
+                users = result.scalars().all()
+                if len(users) != 2:
+                    raise ValueError("One or both users not found.")
+                user1, user2 = users
+                if user2 not in user1.friends:
+                    user1.friends.append(user2)
+                if user1 not in user2.friends:
+                    user2.friends.append(user1)
+                await session.commit()
         except Exception as e:
             await session.rollback()
             raise RuntimeError(f"Database operation failed: {e}")

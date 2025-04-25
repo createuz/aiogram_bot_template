@@ -37,7 +37,8 @@ class RedisConfig:
     db: int = int(os.getenv("REDIS_DATABASE", 0))
     host: str = os.getenv("REDIS_HOST", "localhost")
     port: int = int(os.getenv("REDIS_PORT", 6379))
-    password: str | None = os.getenv("REDIS_PASSWORD")
+    password = None
+    # password: str | None = os.getenv("REDIS_PASSWORD")
     username: str | None = os.getenv("REDIS_USERNAME")
     state_ttl: int = int(os.getenv("REDIS_TTL_STATE", 3600))
     data_ttl: int = int(os.getenv("REDIS_TTL_DATA", 7200))
@@ -99,3 +100,8 @@ ADMIN = 5383531061
 conf: AppConfig = AppConfig()
 bot: Bot = Bot(token=conf.bot_token.token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 # print("Database URL:", conf.db.build_db_url())
+
+
+" https://f0ea-92-63-205-165.ngrok-free.app/bot/7189528230:AAEayeWCvI0Jv7YufsMLW8CmqcLPQObbxyg"
+get_webhook_info = "https://api.telegram.org/bot7189528230:AAEayeWCvI0Jv7YufsMLW8CmqcLPQObbxyg/getWebhookInfo"
+set_webhook = "https://api.telegram.org/bot7189528230:AAEayeWCvI0Jv7YufsMLW8CmqcLPQObbxyg/setWebhook?url=https://f0ea-92-63-205-165.ngrok-free.app/bot/7189528230:AAEayeWCvI0Jv7YufsMLW8CmqcLPQObbxyg&secret_token=4411f20d872535bf80ab94eaf2c84238bca388352fce0af0a2244bddcc9306d5"

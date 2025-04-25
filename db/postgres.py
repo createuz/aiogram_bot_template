@@ -1,17 +1,16 @@
-import logging
-
 import asyncpg as asyncpg
 import orjson
 import redis
 import structlog
 import tenacity
 from aiogram import Dispatcher
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from redis.asyncio import ConnectionPool
 from redis.asyncio import Redis
 from tenacity import _utils
 
 from data import conf
-from db.database import db
 from utils.sessions import SmartAiogramAiohttpSession
 
 TIMEOUT_BETWEEN_ATTEMPTS = 2
@@ -25,29 +24,31 @@ def before_log(retry_state: tenacity.RetryCallState) -> None:
         verb, value = "raised", retry_state.outcome.exception()
     else:
         verb, value = "returned", retry_state.outcome.result()
-
-    logger = retry_state.kwargs.get("logger", logging.getLogger(__name__))
+    logger = retry_state.kwargs["logger"]
     logger.info(
-        f"Retrying '{_utils.get_callback_name(retry_state.fn)}' in {retry_state.next_action.sleep} seconds "
-        f"as it {verb} {value}",
+        "Retrying {callback} in {sleep} seconds as it {verb} {value}",
+        callback=_utils.get_callback_name(retry_state.fn),  # type: ignore[arg-type]
+        sleep=retry_state.next_action.sleep,  # type: ignore[union-attr]
+        verb=verb,
+        value=value,
         extra={
-            "callback": _utils.get_callback_name(retry_state.fn),
-            "sleep": retry_state.next_action.sleep,
+            "callback": _utils.get_callback_name(retry_state.fn),  # type: ignore[arg-type]
+            "sleep": retry_state.next_action.sleep,  # type: ignore[union-attr]
             "verb": verb,
-            "value": str(value),
-            "attempt_number": retry_state.attempt_number,
+            "value": value,
         },
     )
 
 
 def after_log(retry_state: tenacity.RetryCallState) -> None:
-    logger = retry_state.kwargs.get("logger", logging.getLogger(__name__))
+    logger = retry_state.kwargs["logger"]
     logger.info(
-        f"Finished call to '{_utils.get_callback_name(retry_state.fn)}' "
-        f"after {retry_state.seconds_since_start:.2f} seconds. "
-        f"This was the {_utils.to_ordinal(retry_state.attempt_number)} attempt.",
+        "Finished call to {callback!r} after {time:.2f}, this was the {attempt} time calling it.",
+        callback=_utils.get_callback_name(retry_state.fn),  # type: ignore[arg-type]
+        time=retry_state.seconds_since_start,
+        attempt=_utils.to_ordinal(retry_state.attempt_number),
         extra={
-            "callback": _utils.get_callback_name(retry_state.fn),
+            "callback": _utils.get_callback_name(retry_state.fn),  # type: ignore[arg-type]
             "time": retry_state.seconds_since_start,
             "attempt": _utils.to_ordinal(retry_state.attempt_number),
         },
@@ -134,9 +135,9 @@ async def create_db_connections(dp: Dispatcher) -> None:
         try:
             redis_pool = await wait_redis_pool(
                 logger=dp["cache_logger"],
-                host=conf.cache.host,
-                port=conf.cache.port,
-                password=conf.cache.password,
+                host=conf.redis.host,
+                port=conf.redis.port,
+                password=conf.redis.password,
                 database=0
             )
         except tenacity.RetryError:
@@ -146,26 +147,31 @@ async def create_db_connections(dp: Dispatcher) -> None:
             logger.debug("Succesfully connected to Redis")
         dp["cache_pool"] = redis_pool
     dp["temp_bot_cloud_session"] = SmartAiogramAiohttpSession(
-        json_loads=orjson.loads, logger=dp["aiogram_session_logger"])
+        json_loads=orjson.loads,
+        logger=dp["aiogram_session_logger"]
+    )
+    if conf.custom_api_server.enabled:
+        dp["temp_bot_local_session"] = SmartAiogramAiohttpSession(
+            api=TelegramAPIServer(
+                base=conf.custom_api_server.base_url,
+                file=conf.custom_api_server.file_url,
+                is_local=conf.custom_api_server.is_local,
+            ),
+            json_loads=orjson.loads,
+            logger=dp["aiogram_session_logger"],
+        )
 
 
 async def close_db_connections(dp: Dispatcher) -> None:
+    if "temp_bot_cloud_session" in dp.workflow_data:
+        temp_bot_cloud_session: AiohttpSession = dp["temp_bot_cloud_session"]
+        await temp_bot_cloud_session.close()
+    if "temp_bot_local_session" in dp.workflow_data:
+        temp_bot_local_session: AiohttpSession = dp["temp_bot_local_session"]
+        await temp_bot_local_session.close()
     if "db_pool" in dp.workflow_data:
         db_pool: asyncpg.Pool = dp["db_pool"]
         await db_pool.close()
     if "cache_pool" in dp.workflow_data:
-        cache_pool: redis.asyncio.Redis = dp["cache_pool"]
+        cache_pool: redis.asyncio.Redis = dp["cache_pool"]  # type: ignore[type-arg]
         await cache_pool.close()
-
-
-async def setup_database(logger):
-    await wait_postgres(
-        logger=logger,
-        host=conf.db.host,
-        port=conf.db.port,
-        user=conf.db.user,
-        password=conf.db.password,
-        database=conf.db.name,
-    )
-    await db.init()
-    logger.info("Database setup completed.")
